@@ -35,8 +35,8 @@ function checkSeq(seq: number[], rules: Map<number, Set<number>>) {
   const visited = new Set<number>();
   for (const elem of seq) {
     const allPreds = rules.get(elem) ?? new Set<number>();
-    const reqPreds = intersect(allPreds, seqSet);
-    if (!isSubsetOf(reqPreds, visited)) {
+    const reqPreds = allPreds.intersection(seqSet);
+    if (!reqPreds.isSubsetOf(visited)) {
       return false;
     }
     visited.add(elem);

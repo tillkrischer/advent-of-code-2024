@@ -34,7 +34,7 @@ function fixSeq(seq: number[], rules: Map<number, Set<number>>) {
   return seq
     .map((n) => {
       const allPreds = rules.get(n) ?? new Set<number>();
-      const reqPreds: Set<number> = intersect(allPreds, seqSet);
+      const reqPreds = allPreds.intersection(seqSet);
       return { n, reqPreds };
     })
     .toSorted((a, b) => b.reqPreds.size - a.reqPreds.size)
@@ -47,19 +47,11 @@ function checkSeq(seq: number[], rules: Map<number, Set<number>>) {
   const visited = new Set<number>();
   for (const elem of seq) {
     const allPreds = rules.get(elem) ?? new Set<number>();
-    const reqPreds = intersect(allPreds, seqSet);
-    if (!isSubsetOf(reqPreds, visited)) {
+    const reqPreds = allPreds.intersection(seqSet);
+    if (!reqPreds.isSubsetOf(visited)) {
       return false;
     }
     visited.add(elem);
   }
   return true;
-}
-
-function intersect<T>(a: Set<T>, b: Set<T>) {
-  return new Set([...a].filter((i) => b.has(i)));
-}
-
-function isSubsetOf<T>(a: Set<T>, b: Set<T>) {
-  return [...a].every((i) => b.has(i));
 }
