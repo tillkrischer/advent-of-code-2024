@@ -44,11 +44,3 @@ function checkSeq(seq: number[], rules: Map<number, Set<number>>) {
   return true;
 }
 
-function intersect<T>(a: Set<T>, b: Set<T>) {
-  return new Set([...a].filter((i) => b.has(i)));
-}
-
-function isSubsetOf<T>(a: Set<T>, b: Set<T>) {
-  return [...a].every((i) => b.has(i));
-}
-
