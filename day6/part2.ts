@@ -41,10 +41,12 @@ function hasLoop(chars: string[][], pos: Pos, direction: Direction) {
   const visited = new Set<string>();
 
   while (pos !== null) {
-    if (!visited.has(`${pos.x},${pos.y},${direction}`)) {
-      visited.add(`${pos.x},${pos.y},${direction}`);
-    } else {
-      return true;
+    if (isBlocked(chars, pos, direction)) {
+      if (!visited.has(`${pos.x},${pos.y},${direction}`)) {
+        visited.add(`${pos.x},${pos.y},${direction}`);
+      } else {
+        return true;
+      }
     }
     while (isBlocked(chars, pos, direction)) {
       direction = turn(direction);
