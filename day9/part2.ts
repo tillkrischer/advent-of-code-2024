@@ -1,7 +1,7 @@
 import * as fs from "fs/promises";
 
-const content = await fs.readFile("day9/test-input.txt", { encoding: "utf8" });
-// const content = await fs.readFile("day9/input.txt", { encoding: "utf8" });
+// const content = await fs.readFile("day9/test-input.txt", { encoding: "utf8" });
+const content = await fs.readFile("day9/input.txt", { encoding: "utf8" });
 
 type Segment = {
   id: number | null;
@@ -14,18 +14,70 @@ const nums = content
   .map((n) => Number.parseInt(n));
 
 let [segments, lastId] = parseToSegments(nums);
-console.log(segments);
 
 for (let id = lastId; id >= 0; id -= 1) {
   const fileIndex = segments.findIndex((s) => s.id === id);
   const space = findSpace(segments, segments[fileIndex].length, fileIndex);
   if (space !== null) {
     segments = move(segments, fileIndex, space);
+    // segments = clean(segments); // not necessary
+  }
+  // print(segments);
+}
+
+const checksum = computeChecksum(segments);
+
+console.log(checksum);
+
+function print(segments: Segment[]) {
+  let s = "";
+  for (const segment of segments) {
+    if (segment.id === null) {
+      s += ".".repeat(segment.length);
+    } else {
+      s += segment.id.toString().repeat(segment.length);
+    }
+  }
+  console.log(s);
+}
+
+function computeChecksum(segments: Segment[]) {
+  let checksum = 0;
+  let i = 0;
+  let index = 0;
+  while (i < segments.length) {
+    if (segments[i].id === null) {
+      index += segments[i].length;
+    } else {
+      for (let j = 0; j < segments[i].length; j += 1) {
+        checksum += index * segments[i].id;
+        index += 1;
+      }
+    }
+    i += 1;
+  }
+  return checksum;
+}
+
+function clean(segments: Segment[]): Segment[] {
+  const cleanSegments: Segment[] = [];
+  let i = 0;
+
+  while (i < segments.length) {
+    if (segments[i].id !== null) {
+      cleanSegments.push(segments[i]);
+      i += 1;
+    } else {
+      let combinedLength = 0;
+      while (i < segments.length && segments[i].id === null) {
+        combinedLength += segments[i].length;
+        i += 1;
+      }
+      cleanSegments.push({ id: null, length: combinedLength });
+    }
   }
 
-  console.log(segments);
-
-  break;
+  return cleanSegments;
 }
 
 function move(segments: Segment[], file: number, space: number): Segment[] {
@@ -34,6 +86,7 @@ function move(segments: Segment[], file: number, space: number): Segment[] {
     segments[file],
     { id: null, length: segments[space].length - segments[file].length },
     ...segments.slice(space + 1, file),
+    { id: null, length: segments[file].length },
     ...segments.slice(file + 1, segments.length),
   ];
 }
@@ -69,33 +122,3 @@ function parseToSegments(nums: number[]): [Segment[], number] {
 
   return [segments, id - 1];
 }
-//
-// let [firstFree, lastOcc] = advance(blocks, 0, blocks.length - 1);
-//
-// while (firstFree < lastOcc) {
-//   [blocks[firstFree], blocks[lastOcc]] = [blocks[lastOcc], blocks[firstFree]];
-//   [firstFree, lastOcc] = advance(blocks, firstFree, lastOcc);
-// }
-//
-// // console.log(blocks)
-//
-// let checksum = 0;
-// i = 0;
-// while (i < blocks.length && blocks[i] !== null) {
-//   checksum += i * blocks[i];
-//   i += 1;
-// }
-//
-// console.log(checksum);
-//
-// function advance(
-//   blocks: (number | null)[],
-//   firstFree: number,
-//   lastOcc: number,
-// ) {
-//   while (firstFree < blocks.length && blocks[firstFree] !== null) {
-//     firstFree += 1;
-//   }
-//   while (lastOcc >= 0 && blocks[lastOcc] === null) {
-//     lastOcc -= 1;
-//   }
