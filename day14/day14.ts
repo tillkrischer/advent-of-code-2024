@@ -21,9 +21,60 @@ const part1 = safetyFactor(room100);
 
 console.log(part1);
 
-const roomTree = roomAt(8087);
-for (const row of roomTree) {
-  console.log(row.map((n) => (n > 0 ? "X" : " ")).join(""));
+// const roomTree = roomAt(8087);
+// for (const row of roomTree) {
+//   console.log(row.map((n) => (n > 0 ? "X" : " ")).join(""));
+// }
+
+let lowest = Number.POSITIVE_INFINITY;
+let part2 = 0;
+for (let i = 0; i < h * w; i++) {
+  const room = roomAt(i);
+  const varian = variance(room);
+  if (varian < lowest) {
+    lowest = varian;
+    part2 = i;
+    // printRoom(room);
+  }
+}
+
+console.log(part2);
+
+function printRoom(room: number[][]) {
+  for (const row of room) {
+    console.log(row.map((n) => (n > 0 ? "X" : " ")).join(""));
+  }
+}
+
+function variance(room: number[][]) {
+  const [mx, my] = mean(room);
+  let n = 0;
+  let all = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (room[y][x] > 0) {
+        all += (x - mx) ** 2 + (y - my) ** 2;
+        n += 1;
+      }
+    }
+  }
+  return all / n;
+}
+
+function mean(room: number[][]) {
+  let n = 0;
+  let allx = 0;
+  let ally = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (room[y][x] > 0) {
+        allx += x;
+        ally += y;
+        n += 1;
+      }
+    }
+  }
+  return [allx / n, ally / n];
 }
 
 function roomAt(time: number) {
@@ -57,8 +108,8 @@ function safetyFactor(room: number[][]) {
   return quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3];
 }
 
-const pos = firstMeet(7, 101, 53, 103);
-console.log(pos);
+// const pos = firstMeet(7, 101, 53, 103);
+// console.log(pos);
 
 /*
  * p=a+da*x
