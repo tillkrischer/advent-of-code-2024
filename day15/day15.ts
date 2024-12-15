@@ -3,7 +3,8 @@ import * as fs from "fs/promises";
 const content = await fs.readFile(Bun.argv[2], { encoding: "utf8" });
 
 const [split1, split2] = content.split("\n\n");
-const room = split1.split("\n").map((row) => row.split(""));
+const room1 = split1.split("\n").map((row) => row.split(""));
+const room2 = split1.split("\n").map((row) => row.split(""));
 const moves = split2.split("").filter((c) => !!getDir(c));
 
 part1();
@@ -23,17 +24,17 @@ function part1() {
     let ty = y + dy;
     let tx = x + dx;
 
-    while (room[ty][tx] === "O") {
+    while (room1[ty][tx] === "O") {
       [ty, tx] = [ty + dy, tx + dx];
     }
-    if (room[ty][tx] === "#") {
+    if (room1[ty][tx] === "#") {
       return [y, x];
     }
     while (ty !== y || tx !== x) {
       const [ny, nx] = [ty + -1 * dy, tx + -1 * dx];
-      const temp = room[ty][tx];
-      room[ty][tx] = room[ny][nx];
-      room[ny][nx] = temp;
+      const temp = room1[ty][tx];
+      room1[ty][tx] = room1[ny][nx];
+      room1[ny][nx] = temp;
       [ty, tx] = [ny, nx];
     }
     return [y + dy, x + dx];
@@ -44,15 +45,15 @@ function part2() {
   const walls: [number, number][] = [];
   const boxes: [number, number][] = [];
   let robot: [number, number] = [0, 0];
-  for (let y = 0; y < room.length; y++) {
-    for (let x = 0; x < room[0].length; x++) {
-      if (room[y][x] === "#") {
+  for (let y = 0; y < room2.length; y++) {
+    for (let x = 0; x < room2[0].length; x++) {
+      if (room2[y][x] === "#") {
         walls.push([y, 2 * x], [y, 2 * x + 1]);
       }
-      if (room[y][x] === "O") {
+      if (room2[y][x] === "O") {
         boxes.push([y, 2 * x]);
       }
-      if (room[y][x] === "@") {
+      if (room2[y][x] === "@") {
         robot = [y, 2 * x];
       }
     }
@@ -121,9 +122,9 @@ function printRoom2(
   boxes: [number, number][],
   robot: [number, number],
 ) {
-  const room2: string[][] = new Array(room.length)
+  const room2: string[][] = new Array(room1.length)
     .fill(0)
-    .map((_) => new Array(room[0].length * 2).fill("."));
+    .map((_) => new Array(room1[0].length * 2).fill("."));
 
   for (const [wally, wallx] of walls) {
     room2[wally][wallx] = "#";
@@ -211,9 +212,9 @@ function wallsIntersectBox(walls: [number, number][], box: [number, number]) {
 
 function getScore() {
   let score = 0;
-  for (let y = 0; y < room.length; y++) {
-    for (let x = 0; x < room[0].length; x++) {
-      if (room[y][x] === "O") {
+  for (let y = 0; y < room1.length; y++) {
+    for (let x = 0; x < room1[0].length; x++) {
+      if (room1[y][x] === "O") {
         score += 100 * y + x;
       }
     }
@@ -222,15 +223,15 @@ function getScore() {
 }
 
 function printRoom() {
-  for (const row of room) {
+  for (const row of room1) {
     console.log(row.join(""));
   }
 }
 
 function getStart() {
-  for (let y = 0; y < room.length; y++) {
-    for (let x = 0; x < room[0].length; x++) {
-      if (room[y][x] === "@") {
+  for (let y = 0; y < room1.length; y++) {
+    for (let x = 0; x < room1[0].length; x++) {
+      if (room1[y][x] === "@") {
         return [y, x];
       }
     }
