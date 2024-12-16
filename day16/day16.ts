@@ -31,6 +31,7 @@ for (let y = 0; y < R; y++) {
 }
 
 const dists = new Array(R * C * 4).fill(Number.POSITIVE_INFINITY);
+const prev: Set<number>[] = new Array(R * C * 4).fill(new Set());
 dists[start] = 0;
 const Q = new Set(dists.keys());
 
@@ -41,12 +42,47 @@ while (Q.size > 0) {
     const alt = dists[u] + duv;
     if (alt < dists[v]) {
       dists[v] = alt;
+      prev[v] = new Set([u]);
+    }
+    if (alt === dists[v]) {
+      prev[v].add(u);
     }
   }
 }
 
-const shortest = Math.min(dists[end], dists[end + 1], dists[end + 2], dists[end + 3])
-console.log(shortest)
+let shortestEnd = end;
+for (let i = 0; i < 4; i++) {
+  if (dists[end+i] < shortestEnd) {
+    shortestEnd = end+1;
+  }
+}
+const part1 = dists[shortestEnd]
+console.log(part1);
+
+let part2 = 0;
+const seen = new Set<number>();
+const bfs = [shortestEnd];
+while (bfs.length > 0) {
+  const e = bfs.shift();
+  const y = (e / (C * 4)) | 0;
+  const x = ((e % (C * 4)) / 4) | 0;
+  if (grid[y][x] !== "O") {
+    part2 += 1;
+    grid[y][x] = "O";
+  }
+  seen.add(e);
+  for (const p of prev[e]) {
+    if (!seen.has(p)) {
+      bfs.push(p);
+    }
+  }
+}
+
+// for (const row of grid) {
+//   console.log(row.join(""));
+// }
+
+console.log(part2);
 
 function minDist() {
   let min = null;
@@ -64,8 +100,8 @@ function nbhs(n: number): [number, number][] {
   const y = (n / (C * 4)) | 0;
   const x = ((n % (C * 4)) / 4) | 0;
   const d = n % 4;
-  if (grid[y][x] === '#') {
-    return []
+  if (grid[y][x] === "#") {
+    return [];
   }
 
   const res: [number, number][] = [];
