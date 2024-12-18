@@ -9,86 +9,94 @@ const positions = content
 
 // const R = 7;
 // const C = 7;
-// const STPS = 12;
+// const FLN = 12;
 const R = 71;
 const C = 71;
 const FLN = 1024;
 
-const G = gridAfter(FLN);
-// print(G);
+const G = new Array(R).fill(0).map((_) => new Array(C).fill("."));
 
-const dists = new Array(R)
-  .fill(0)
-  .map((_) => new Array(C).fill(Number.POSITIVE_INFINITY));
-const seen = new Array(R).fill(0).map((_) => new Array(C).fill(false));
-dists[0][0] = 0;
+let path = getPathToEnd();
+for (let i = 0; i < positions.length; i++) {
+  const [x, y] = positions[i];
+  G[y][x] = "#";
 
-const Q = [[0, 0]];
-while (Q.length > 0) {
-  const [uy, ux] = removeMin();
-  seen[uy][ux] = true;
-  for (const [ny, nx] of nbhs(uy, ux)) {
-    if (!seen[ny][nx]) {
-      Q.push([ny, nx]);
+  if (path.has(y * C + x)) {
+    path = getPathToEnd();
+    if (path === null) {
+      const part2 = x + "," + y;
+      console.log(part2);
+      break;
     }
-    const alt = dists[uy][ux] + 1;
-    if (alt < dists[ny][nx]) {
-      dists[ny][nx] = alt;
-    }
+  }
+
+  if (i === FLN) {
+    const part1 = path.size - 1;
+    console.log(part1);
   }
 }
 
-const part1 = dists[R-1][C-1];
-console.log(part1)
+function getPathToEnd(): Set<number> | null {
+  function removeMin() {
+    let minV: number | null = null;
+    let min = 0;
+    for (const e of Q) {
+      if (minV === null || dists[e] < minV) {
+        minV = dists[e];
+        min = e;
+      }
+    }
 
-function removeMin() {
-  let min: number | null = null;
-  let minCords = [0, 0];
-  for (let y = 0; y < R; y++) {
-    for (let x = 0; x < R; x++) {
-      if (!seen[y][x] && (min === null || dists[y][x] < min)) {
-        min = dists[y][x];
-        minCords = [y, x];
+    Q.delete(min);
+    return min;
+  }
+
+  const dists = new Array<number>(R * C).fill(Number.POSITIVE_INFINITY);
+  const prev = new Array<number>(R * C).fill(0);
+  dists[0] = 0;
+  const Q = new Set([0]);
+  while (Q.size > 0) {
+    const u = removeMin();
+    for (const v of nbhs(u)) {
+      const alt = dists[u] + 1;
+      if (alt < dists[v]) {
+        dists[v] = alt;
+        prev[v] = u;
+        Q.add(v);
       }
     }
   }
-  const removeIndex = Q.findIndex(
-    (e) => e[0] === minCords[0] && e[1] === minCords[1],
-  );
-  Q.splice(removeIndex, 1);
-  return minCords;
+
+  if (dists[R * C - 1] === Number.POSITIVE_INFINITY) {
+    return null;
+  }
+
+  const path = new Set<number>();
+  let u = R * C - 1;
+  path.add(u);
+  while (u !== 0) {
+    u = prev[u];
+    path.add(u);
+  }
+  return path;
 }
 
-function nbhs(y: number, x: number) {
-  const res: [number, number][] = [];
-  if (y > 0 && G[y - 1][x] === ".") {
-    res.push([y - 1, x]);
-  }
-  if (x > 0 && G[y][x - 1] === ".") {
-    res.push([y, x - 1]);
-  }
-  if (y < R - 1 && G[y + 1][x] === ".") {
-    res.push([y + 1, x]);
-  }
-  if (x < C - 1 && G[y][x + 1] === ".") {
-    res.push([y, x + 1]);
+function nbhs(u: number) {
+  const dirs = [
+    [0, 1],
+    [1, 0],
+    [0, -1],
+    [-1, 0],
+  ];
+
+  const y = (u / R) | 0;
+  const x = u % R;
+  const res: number[] = [];
+  for (const [dy, dx] of dirs) {
+    const [ny, nx] = [y + dy, x + dx];
+    if (ny >= 0 && ny < R && nx >= 0 && nx < C && G[y][x] === ".") {
+      res.push(ny * C + nx);
+    }
   }
   return res;
-}
-
-function gridAfter(steps: number) {
-  const G = new Array(R).fill(0).map((_) => new Array(C).fill("."));
-
-  for (let i = 0; i < steps; i++) {
-    const [x, y] = positions[i];
-    G[y][x] = "#";
-  }
-
-  return G;
-}
-
-function print(G: string[][]) {
-  for (const r of G) {
-    console.log(r.join(""));
-  }
 }
