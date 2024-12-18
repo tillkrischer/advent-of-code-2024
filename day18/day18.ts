@@ -1,4 +1,5 @@
 import * as fs from "fs/promises";
+import { heappop, heappush } from "../utils/heap";
 
 const content = await fs.readFile(Bun.argv[2], { encoding: "utf8" });
 
@@ -37,32 +38,19 @@ for (let i = 0; i < positions.length; i++) {
 }
 
 function getPathToEnd(): Set<number> | null {
-  function removeMin() {
-    let minV: number | null = null;
-    let min = 0;
-    for (const e of Q) {
-      if (minV === null || dists[e] < minV) {
-        minV = dists[e];
-        min = e;
-      }
-    }
-
-    Q.delete(min);
-    return min;
-  }
-
   const dists = new Array<number>(R * C).fill(Number.POSITIVE_INFINITY);
   const prev = new Array<number>(R * C).fill(0);
   dists[0] = 0;
-  const Q = new Set([0]);
-  while (Q.size > 0) {
-    const u = removeMin();
+  const Q: [number, number][] = [];
+  heappush(Q, [0, 0]);
+  while (Q.length > 0) {
+    const [_, u] = heappop(Q);
     for (const v of nbhs(u)) {
       const alt = dists[u] + 1;
       if (alt < dists[v]) {
         dists[v] = alt;
         prev[v] = u;
-        Q.add(v);
+        heappush(Q, [alt, v])
       }
     }
   }
