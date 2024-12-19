@@ -7,27 +7,29 @@ const [towelinput, patterninput] = content.split("\n\n");
 const towels = towelinput.split(", ");
 const patterns = patterninput.split("\n").filter((l) => l.length > 0);
 
-const DP = new Map<string, boolean>();
+const DP = new Map<string, number>();
 
 let part1 = 0;
+let part2 = 0;
 for (const pattern of patterns) {
-  if (isPossible(pattern)) {
-    part1 += 1;
-  }
+  const combs = combinations(pattern);
+  part1 += Math.sign(combs);
+  part2 += combs;
 }
 console.log(part1);
+console.log(part2);
 
-function isPossible(pattern: string): boolean {
+function combinations(pattern: string): number {
   if (DP.has(pattern)) {
     return DP.get(pattern);
   }
-  let result = false;
+  let result = 0;
   if (pattern.length === 0) {
-    result = true;
+    result = 1;
   } else {
     for (const towel of towels) {
       if (pattern.startsWith(towel)) {
-        result ||= isPossible(pattern.slice(towel.length));
+        result += combinations(pattern.slice(towel.length));
       }
     }
   }
