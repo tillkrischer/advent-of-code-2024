@@ -49,22 +49,29 @@ while (Q.length > 0) {
 }
 
 let part1 = 0;
+let part2 = 0;
 for (let y = 0; y < R; y++) {
   for (let x = 0; x < R; x++) {
     if (G[y][x] === ".") {
-      part1 += trySkips(y, x);
+      part1 += trySkips(y, x, 2);
+      part2 += trySkips(y, x, 20);
     }
   }
 }
 console.log(part1);
+console.log(part2);
 
-function trySkips(y: number, x: number) {
+function trySkips(y: number, x: number, maxD: number) {
   let res = 0;
-  for (const [dy, dx] of dirs) {
-    const [ny, nx] = [y + 2 * dy, x + 2 * dx];
-    if (ny >= 0 && ny < R && nx >= 0 && nx < C && G[ny][nx] === ".") {
-      if (dists[ny][nx] - dists[y][x] - 2 >= TIME_SAVE) {
-        res += 1;
+  for (let dy = -1 * maxD; dy <= maxD; dy++) {
+    const maxDx = maxD - Math.abs(dy);
+    for (let dx = -1 * maxDx; dx <= maxDx; dx++) {
+      const [ny, nx] = [y + dy, x + dx];
+      const d = Math.abs(dy) + Math.abs(dx);
+      if (ny >= 0 && ny < R && nx >= 0 && nx < C && G[ny][nx] === ".") {
+        if (dists[ny][nx] - dists[y][x] - d >= TIME_SAVE) {
+          res += 1;
+        }
       }
     }
   }
@@ -81,64 +88,3 @@ function nbhs(y: number, x: number) {
   }
   return res;
 }
-
-// let s = 0;
-// let e = 0;
-// for (let y = 0; y < R; y++) {
-//   for (let x = 0; x < R; x++) {
-//     if (G[y][x] === "S") {
-//       s = R * C + y * R + x;
-//       G[y][x] = ".";
-//     }
-//     if (G[y][x] === "E") {
-//       e = y * R + x;
-//       G[y][x] = ".";
-//     }
-//   }
-// }
-//
-//
-//
-// const dists = new Array<number>(2 * R * C).fill(Number.POSITIVE_INFINITY);
-// dists[s] = 0;
-// const Q: [number, number][] = [];
-// heappush(Q, [0, s]);
-// while (Q.length > 0) {
-//   const [_, u] = heappop(Q);
-//   for (const [v, d] of nbhs(u)) {
-//     const alt = dists[u] + d;
-//     if (alt < dists[v]) {
-//       dists[v] = alt;
-//       heappush(Q, [alt, v]);
-//     }
-//   }
-// }
-//
-// const part1 = dists[R*C+e] - dists[e];
-// console.log(part1);
-//
-// function nbhs(u: number): [number, number][] {
-//   const dirs = [
-//     [0, 1],
-//     [1, 0],
-//     [0, -1],
-//     [-1, 0],
-//   ];
-//   const s = (u / (R * C)) | 0;
-//   const y = ((u % (R * C)) / R) | 0;
-//   const x = u % R;
-//   const res: [number, number][] = [];
-//   for (const [dy, dx] of dirs) {
-//     const [ny, nx] = [y + dy, x + dx];
-//     if (ny >= 0 && ny < R && nx >= 0 && nx < C && G[y][x] !== "#") {
-//       res.push([s * R * C + ny * C + nx, 1]);
-//     }
-//     if (s === 1) {
-//       const [ny, nx] = [y + 2 * dy, x + 2 * dx];
-//       if (ny >= 0 && ny < R && nx >= 0 && nx < C && G[y][x] !== "#") {
-//         res.push([ny * C + nx, 2]);
-//       }
-//     }
-//   }
-//   return res;
-// }
