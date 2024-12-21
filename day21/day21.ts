@@ -12,6 +12,7 @@ const numericCords = {
   "8": [0, 1],
   "9": [0, 2],
   A: [3, 2],
+  D: [3, 0],
 };
 
 const positionalCords = {
@@ -20,65 +21,87 @@ const positionalCords = {
   "<": [1, 0],
   v: [1, 1],
   ">": [1, 2],
+  D: [0, 0],
 };
 
-const LEVELS = 2;
+const DP: Map<string, number>[] = new Array(27).fill(0).map((_) => new Map());
 
 const content = await fs.readFile(Bun.argv[2], { encoding: "utf8" });
 
 const lines = content.split("\n").filter((l) => l.length > 0);
 
 let part1 = 0;
+let part2 = 0;
 for (const code of lines) {
-  const l = getMinLength(code);
+  const l1 = minLength(code, 3);
+  const l2 = minLength(code, 26);
   const num = Number(code.slice(0, 3));
-  part1 += l * num;
+  part1 += l1 * num;
+  part2 += l2 * num;
 }
 console.log(part1);
+console.log(part2);
 
-function getMinLength(code: string) {
-  function getSequence(code: string, pos: string, res: string, depth: number) {
-    if (code.length === 0 && depth === 0) {
-      min = Math.min(min, res.length);
-      return;
+function minLength(code: string, its: number) {
+  if (its === 0) {
+    return code.length;
+  }
+  if (DP[its].has(code)) {
+    return DP[its].get(code);
+  }
+  const splits = code
+    .split("A")
+    .slice(0, -1)
+    .map((s) => s + "A");
+
+  let sum = 0;
+  for (const split of splits) {
+    let min = Number.POSITIVE_INFINITY;
+    for (const seq of sequences(split)) {
+      min = Math.min(min, minLength(seq, its - 1));
     }
+    sum += min;
+  }
+  DP[its].set(code, sum);
+  return sum;
+}
+
+function sequences(initCode: string): string[] {
+  const type = /\d/.test(initCode) ? "num" : "pos";
+
+  const S = [[initCode, "A", ""]];
+  const results = [];
+  while (S.length > 0) {
+    const [code, pos, res] = S.pop();
     if (code.length === 0) {
-      getSequence(res, "A", "", depth - 1);
-      // console.log(depth, res)
-      return;
+      results.push(res);
+      continue;
     }
     const c = code.charAt(0);
-    if (depth === LEVELS) {
-      for (const trns of numericTransform(pos, c)) {
-        getSequence(code.slice(1), c, res + trns, depth);
-      }
-    } else {
-      for (const trns of positionalTransform(pos, c)) {
-        getSequence(code.slice(1), c, res + trns, depth);
-      }
+    for (const trns of transform(pos, c, type)) {
+      S.push([code.slice(1), c, res + trns]);
     }
   }
-
-  let min = Number.POSITIVE_INFINITY;
-  getSequence(code, "A", "", LEVELS);
-  return min;
+  return results;
 }
 
-function numericTransform(start: string, dest: string): string[] {
-  const [sy, sx] = numericCords[start];
-  const [dy, dx] = numericCords[dest];
+function transform(start: string, end: string, type: "num" | "pos"): string[] {
+  const cords = type === "num" ? numericCords : positionalCords;
+  const [sy, sx] = cords[start];
+  const [ey, ex] = cords[end];
+  const [dy, dx] = cords["D"];
 
   let vert = "";
-  if (dy > sy) {
-    vert += "v".repeat(Math.abs(dy - sy));
+  if (ey > sy) {
+    vert += "v".repeat(Math.abs(ey - sy));
   } else {
-    vert += "^".repeat(Math.abs(dy - sy));
+    vert += "^".repeat(Math.abs(ey - sy));
   }
   let horiz = "";
-  if (dx > sx) {
-    horiz += ">".repeat(Math.abs(dx - sx));
+  if (ex > sx) {
+    horiz += ">".repeat(Math.abs(ex - sx));
   } else {
-    horiz += "<".repeat(Math.abs(dx - sx));
+    horiz += "<".repeat(Math.abs(ex - sx));
   }
 
   if (vert.length === 0 || horiz.length === 0) {
@@ -86,43 +109,12 @@ function numericTransform(start: string, dest: string): string[] {
   }
 
   let result = [];
-  if (sx !== 0 || dy !== 3) {
+  if (sx !== dx || ey !== dy) {
     result.push(vert + horiz + "A");
   }
-  if (sy !== 3 || dx !== 0) {
+  if (sy !== dy || ex !== dx) {
     result.push(horiz + vert + "A");
   }
   return result;
 }
 
-function positionalTransform(start: string, dest: string): string[] {
-  const [sy, sx] = positionalCords[start];
-  const [dy, dx] = positionalCords[dest];
-
-  let vert = "";
-  if (dy > sy) {
-    vert += "v".repeat(Math.abs(dy - sy));
-  } else {
-    vert += "^".repeat(Math.abs(dy - sy));
-  }
-  let horiz = "";
-  if (dx > sx) {
-    horiz += ">".repeat(Math.abs(dx - sx));
-  } else {
-    horiz += "<".repeat(Math.abs(dx - sx));
-  }
-
-  if (vert.length === 0 || horiz.length === 0) {
-    return [vert + horiz + "A"];
-  }
-
-  let result = [];
-  if (sx !== 0 || dy !== 0) {
-    result.push(vert + horiz + "A");
-  }
-  if (sy !== 0 || dx !== 0) {
-    result.push(horiz + vert + "A");
-  }
-
-  return result;
-}
