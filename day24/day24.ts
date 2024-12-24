@@ -12,39 +12,114 @@ const content = await fs.readFile(Bun.argv[2], { encoding: "utf8" });
 const [initValuesInput, gatesInput] = content.split("\n\n");
 
 const wires = new Map<string, number>();
-const gates: Gate[] = [];
 const zWires: string[] = [];
+const gatesByOut = new Map<string, Gate>();
 
 for (const line of initValuesInput.split("\n")) {
-  const split = line.split(": ");
-  const wire = split[0];
-  const value = Number.parseInt(split[1]);
-  wires.set(wire, value);
+  const [wire, value] = line.split(": ");
+  wires.set(wire, Number.parseInt(value));
 }
 
 for (const line of gatesInput.split("\n").filter((l) => l.length > 0)) {
-  const split = line.split(/\s+/);
-  gates.push({
-    inA: split[0],
-    inB: split[2],
-    operator: split[1],
-    out: split[4],
-  } as Gate);
-  if (split[4].startsWith("z")) {
-    zWires.push(split[4]);
+  const [inA, operator, inB, _, out] = line.split(/\s+/);
+  const gate = { inA, inB, operator, out } as Gate;
+  gatesByOut.set(gate.out, gate);
+  if (out.startsWith("z")) {
+    zWires.push(out);
   }
 }
 zWires.sort();
 
 let z = getZ();
 while (z === undefined) {
-  for (const gate of gates) {
+  for (const gate of gatesByOut.values()) {
     processGate(gate);
   }
 
   z = getZ();
 }
-console.log(z);
+const part1 = z;
+console.log(part1);
+
+/*
+ * 5 gates per digit
+ * t1 = A ^ B
+ * zout = t1 ^ cin
+ * t2 = t1 & cin
+ * t3 = A & B
+ * cout = t2 | t3
+ *
+ * observation: 3 incorrect zout + 1 incorrect t1
+ * look for replacements for these
+ */
+
+const swaps: [string, string][] = [];
+
+const zwireSwaps: [string, string][] = [];
+for (const zwire of zWires.slice(1, -1)) {
+  const g = gatesByOut.get(zwire);
+  if (g.operator !== "XOR") {
+    const correct = findCorrectZGate(zwire);
+    zwireSwaps.push([zwire, correct]);
+  }
+}
+
+performSwaps(zwireSwaps);
+swaps.push(...zwireSwaps);
+
+const inputXorSwaps: [string, string][] = [];
+for (const zwire of zWires.slice(2, -1)) {
+  const g = gatesByOut.get(zwire);
+  const ga = gatesByOut.get(g.inA);
+  const inputXor = ga.operator !== "OR" ? g.inA : g.inB;
+  const gx = gatesByOut.get(inputXor);
+  if (gx.operator !== "XOR") {
+    const correct = findCorrectInputXorGate(zwire);
+    inputXorSwaps.push([inputXor, correct]);
+  }
+}
+performSwaps(zwireSwaps);
+swaps.push(...zwireSwaps);
+
+const part2 = swaps
+  .flatMap((e) => e)
+  .toSorted()
+  .join(",");
+console.log(part2);
+
+function findCorrectInputXorGate(zwire: string) {
+  const gparentXin = zwire.replace("z", "x");
+  const gparentYin = zwire.replace("z", "y");
+  for (const g of gatesByOut.values()) {
+    const gparents = [g.inA, g.inB];
+    if (
+      g.operator === "XOR" &&
+      gparents.includes(gparentXin) &&
+      gparents.includes(gparentYin)
+    ) {
+      return g.out;
+    }
+  }
+}
+
+function findCorrectZGate(zout: string) {
+  const gparentXin = zout.replace("z", "x");
+  const gparentYin = zout.replace("z", "y");
+  for (const g of gatesByOut.values()) {
+    const ga = gatesByOut.get(g.inA);
+    const gb = gatesByOut.get(g.inB);
+    if (ga && gb) {
+      const gparents = [ga.inA, ga.inB, gb.inA, gb.inB];
+      if (
+        g.operator === "XOR" &&
+        gparents.includes(gparentXin) &&
+        gparents.includes(gparentYin)
+      ) {
+        return g.out;
+      }
+    }
+  }
+}
 
 function processGate(gate: Gate) {
   const a = wires.get(gate.inA);
@@ -73,4 +148,15 @@ function getZ() {
     sum += value * Math.pow(2, i);
   }
   return sum;
+}
+
+function performSwaps(swaps: [string, string][]) {
+  for (const [a, b] of swaps) {
+    const ga = gatesByOut.get(a);
+    const gb = gatesByOut.get(b);
+    ga.out = b;
+    gb.out = a;
+    gatesByOut.set(b, ga);
+    gatesByOut.set(a, gb);
+  }
 }
